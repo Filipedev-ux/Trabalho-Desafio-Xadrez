@@ -1,166 +1,64 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <ctype.h>
-
-char board[8][8];
-int currentPlayer = 0; // 0 para Branco, 1 para Preto
-
-void initializeBoard() {
-    int r, c;
-    char blackPieces[] = {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'};
-    char whitePieces[] = {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'};
-
-    for (c = 0; c < 8; c++) {
-        board[0][c] = blackPieces[c];
-        board[1][c] = 'p';
-        board[6][c] = 'P';
-        board[7][c] = whitePieces[c];
-    }
-    for (r = 2; r < 6; r++) {
-        for (c = 0; c < 8; c++) {
-            board[r][c] = ' ';
-        }
-    }
-}
-
-void printBoard() {
-    int r, c;
-    printf("\n   a b c d e f g h\n");
-    printf("  +-----------------+\n");
-    for (r = 0; r < 8; r++) {
-        printf("%d | ", 8 - r);
-        for (c = 0; c < 8; c++) {
-            printf("%c ", board[r][c]);
-        }
-        printf("| %d\n", 8 - r);
-    }
-    printf("  +-----------------+\n");
-    printf("   a b c d e f g h\n\n");
-}
-
-int isPathClear(int startRow, int startCol, int endRow, int endCol) {
-    int rowStep = (endRow > startRow) ? 1 : ((endRow < startRow) ? -1 : 0);
-    int colStep = (endCol > startCol) ? 1 : ((endCol < startCol) ? -1 : 0);
-    int currentRow = startRow + rowStep;
-    int currentCol = startCol + colStep;
-
-    while (currentRow != endRow || currentCol != endCol) {
-        if (board[currentRow][currentCol] != ' ') {
-            return 0;
-        }
-        currentRow += rowStep;
-        currentCol += colStep;
-    }
-    return 1;
-}
-
-int isValidMove(int startRow, int startCol, int endRow, int endCol) {
-    char piece = board[startRow][startCol];
-    char destPiece = board[endRow][endCol];
-
-    if (startRow < 0 || startRow > 7 || startCol < 0 || startCol > 7 ||
-        endRow < 0 || endRow > 7 || endCol < 0 || endCol > 7) {
-        return 0;
-    }
-
-    if (startRow == endRow && startCol == endCol) {
-        return 0;
-    }
-
-    if ((currentPlayer == 0 && !isupper(piece)) || (currentPlayer == 1 && !islower(piece))) {
-        return 0;
-    }
-
-    if ((currentPlayer == 0 && isupper(destPiece)) || (currentPlayer == 1 && islower(destPiece))) {
-        return 0;
-    }
-
-    int rowDiff = abs(endRow - startRow);
-    int colDiff = abs(endCol - startCol);
-
-    switch (tolower(piece)) {
-        case 'p':
-            if (currentPlayer == 0) { // Branco
-                if (startCol == endCol && destPiece == ' ') {
-                    if (endRow == startRow - 1) return 1;
-                    if (startRow == 6 && endRow == startRow - 2 && board[startRow - 1][startCol] == ' ') return 1;
-                } else if (colDiff == 1 && endRow == startRow - 1 && islower(destPiece)) {
-                    return 1;
-                }
-            } else { // Preto
-                if (startCol == endCol && destPiece == ' ') {
-                    if (endRow == startRow + 1) return 1;
-                    if (startRow == 1 && endRow == startRow + 2 && board[startRow + 1][startCol] == ' ') return 1;
-                } else if (colDiff == 1 && endRow == startRow + 1 && isupper(destPiece)) {
-                    return 1;
-                }
-            }
-            break;
-
-        case 'r':
-            if ((rowDiff == 0 || colDiff == 0) && isPathClear(startRow, startCol, endRow, endCol)) {
-                return 1;
-            }
-            break;
-
-        case 'n':
-            if ((rowDiff == 2 && colDiff == 1) || (rowDiff == 1 && colDiff == 2)) {
-                return 1;
-            }
-            break;
-
-        case 'b':
-            if (rowDiff == colDiff && isPathClear(startRow, startCol, endRow, endCol)) {
-                return 1;
-            }
-            break;
-
-        case 'q':
-            if (((rowDiff == 0 || colDiff == 0) || (rowDiff == colDiff)) && isPathClear(startRow, startCol, endRow, endCol)) {
-                return 1;
-            }
-            break;
-
-        case 'k':
-            if (rowDiff <= 1 && colDiff <= 1) {
-                return 1;
-            }
-            break;
-    }
-
-    return 0;
-}
 
 int main() {
-    char moveStr[5];
-    int startRow, startCol, endRow, endCol;
+    char tabuleiro[8][8];
+    int i, j;
+    int cavalo_x = 7;
+    int cavalo_y = 1;
+    int peao_x = 5;
+    int peao_y = 2;
+    int mov_x, mov_y;
+    int delta_x, delta_y;
 
-    initializeBoard();
-
-    while (1) {
-        printBoard();
-        printf("Jogador %s, insira seu movimento (ex: e2e4): ", (currentPlayer == 0) ? "Branco" : "Preto");
-        scanf("%4s", moveStr);
-
-        if (strlen(moveStr) != 4 || !isalpha(moveStr[0]) || !isdigit(moveStr[1]) || !isalpha(moveStr[2]) || !isdigit(moveStr[3])) {
-            printf("Formato de movimento inválido. Tente novamente.\n");
-            while (getchar() != '\n');
-            continue;
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            tabuleiro[i][j] = '.';
         }
+    }
 
-        startCol = tolower(moveStr[0]) - 'a';
-        startRow = '8' - moveStr[1];
-        endCol = tolower(moveStr[2]) - 'a';
-        endRow = '8' - moveStr[3];
+    tabuleiro[cavalo_x][cavalo_y] = 'C';
+    tabuleiro[peao_x][peao_y] = 'P';
 
-        if (isValidMove(startRow, startCol, endRow, endCol)) {
-            board[endRow][endCol] = board[startRow][startCol];
-            board[startRow][startCol] = ' ';
-            currentPlayer = 1 - currentPlayer;
+    printf("   a b c d e f g h\n");
+    printf("  -----------------\n");
+    for (i = 0; i < 8; i++) {
+        printf("%d| ", 8 - i);
+        for (j = 0; j < 8; j++) {
+            printf("%c ", tabuleiro[i][j]);
+        }
+        printf("|\n");
+    }
+    printf("  -----------------\n");
+
+    printf("\nDesafio do Cavalo!\n");
+    printf("Capture o Peao (P) com o seu Cavalo (C).\n");
+    
+    printf("\nDigite a linha de destino (1-8): ");
+    scanf("%d", &mov_x);
+    printf("Digite a coluna de destino (1-8, onde a=1, b=2...): ");
+    scanf("%d", &mov_y);
+
+    mov_x = 8 - mov_x;
+    mov_y = mov_y - 1;
+
+    delta_x = mov_x - cavalo_x;
+    if (delta_x < 0) {
+        delta_x = -delta_x;
+    }
+
+    delta_y = mov_y - cavalo_y;
+    if (delta_y < 0) {
+        delta_y = -delta_y;
+    }
+
+    if ((delta_x == 1 && delta_y == 2) || (delta_x == 2 && delta_y == 1)) {
+        if (mov_x == peao_x && mov_y == peao_y) {
+            printf("\nBOA! Voce capturou o peao!\n");
         } else {
-            printf("Movimento inválido! Tente novamente.\n");
+            printf("\nQuase! Movimento valido, mas nao capturou a peca.\n");
         }
-         while (getchar() != '\n');
+    } else {
+        printf("\nOps! Esse nao e um movimento valido para o cavalo.\n");
     }
 
     return 0;
